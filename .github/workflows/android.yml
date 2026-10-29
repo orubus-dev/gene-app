@@ -59,12 +59,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           APK=app/build/outputs/apk/release/app-release.apk
-          TAG=gene-v1.0.1
+          VER=$(grep -oP 'versionName "\K[^"]+' app/build.gradle)
+          TAG="gene-v${VER}"
           gh release create $TAG $APK \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Gene v1.0.1 — Android (signed, app.orubu.gene)" \
-            --notes "Crash fix: replaced the Chrome-dependent TWA launcher with a fullscreen WebView shell (works on every Android). Any future error now shows its full trace in-app instead of 'Gene keeps stopping'.
-          • Package: app.orubu.gene · versionCode 2
-          • Signed release APK — download, open, allow install from this source.
-          • Open Gene → tap Download Gene (~0.6 MB) → chat. Fully on-device, offline forever after." \
+            --title "Gene v${VER} — Android (signed, app.orubu.gene)" \
+            --notes "Fully self-contained: her whole mind (UI + python runtime + trained brain, ~15 MB) now ships inside the APK. First launch needs ZERO internet — no download screen, no CDN, no GitHub Pages. Open the app and she is simply awake.
+          • Package: app.orubu.gene · versionCode 3 · same signing key as v1.0.0/v1.0.1 (installs as an update)
+          • The website (orubus-dev.github.io/gene-app) now self-hosts its runtime too — no more jsdelivr dependency.
+          • Everything still runs on-device: no cloud, no account, airplane-mode proof." \
             --latest || gh release upload $TAG $APK --clobber --repo "$GITHUB_REPOSITORY"
