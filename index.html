@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gene — an organism on your phone</title>
+<meta name="description" content="Gene is an on-device artificial organism. Download her mind once, chat forever. No cloud, no account, no API.">
+<meta name="theme-color" content="#0b0d14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gene">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<section id="landing" class="view">
+  <div class="landing-card">
+    <img src="icons/icon-512.png" alt="" class="hero-icon">
+    <h1>Gene</h1>
+    <p class="tagline">An organism, not a chatbot.</p>
+    <p class="sub">Gene is a trained artificial mind that runs entirely on this device.
+    Download her brain once — <b id="bundle-size">~0.6 MB</b> — then chat with no
+    signal, no cloud, no account. Everything happens on your phone.</p>
+
+    <button id="btn-download" class="btn-primary">
+      <span class="btn-label">Download Gene</span>
+    </button>
+
+    <div id="dl-progress" class="progress hidden">
+      <div class="progress-track"><div id="dl-bar" class="progress-bar"></div></div>
+      <div id="dl-status" class="progress-status">preparing…</div>
+    </div>
+
+    <div id="boot-status" class="boot-status hidden">
+      <div class="spinner"></div><span id="boot-label">waking her up…</span>
+    </div>
+
+    <ul class="facts">
+      <li><b>No cloud.</b> Her mind lives in this app's storage.</li>
+      <li><b>Works offline.</b> Airplane mode is fine.</li>
+      <li><b>1 ms answers.</b> No server round-trip, ever.</li>
+    </ul>
+  </div>
+  <footer class="landing-foot">package <code>app.orubu.gene</code> · trained mind v1 ·
+    <a href="https://github.com/orubus-dev/Gene" target="_blank" rel="noopener">open source</a></footer>
+</section>
+
+<!-- ============ CHAT ============ -->
+<section id="chat" class="view hidden">
+  <header class="topbar">
+    <img src="icons/icon-192.png" alt="" class="topbar-icon">
+    <div class="topbar-id">
+      <span class="topbar-name">Gene</span>
+      <span id="topbar-mood" class="topbar-mood">waking…</span>
+    </div>
+    <button id="btn-brain" class="btn-ghost" aria-label="brain panel">🧠</button>
+  </header>
+
+  <main id="messages" class="messages"></main>
+
+  <div class="suggestions" id="suggestions">
+    <button class="chip">what can you do?</button>
+    <button class="chip">what is the symbol of gold?</button>
+    <button class="chip">react hydrogen and oxygen</button>
+    <button class="chip">solve eq_ke for v with e=50 m=1</button>
+    <button class="chip">what do you remember?</button>
+    <button class="chip">show me a brain scan</button>
+  </div>
+
+  <footer class="inputbar">
+    <input id="input" type="text" placeholder="Say something to Gene…" autocomplete="off"
+           enterkeyhint="send">
+    <button id="btn-send" class="btn-send" aria-label="send">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+        <path d="M2 21l21-9L2 3v7l15 2-15 2z"></path>
+      </svg>
+    </button>
+  </footer>
+</section>
+
+<!-- ============ BRAIN SHEET ============ -->
+<div id="brain-sheet" class="sheet-backdrop hidden">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span>Her brain, live</span>
+      <button id="btn-brain-close" class="btn-ghost" aria-label="close">✕</button>
+    </div>
+    <pre id="brain-body" class="brain-body">…</pre>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
