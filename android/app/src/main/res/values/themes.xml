@@ -6,6 +6,6 @@
         <item name="android:windowBackground">@color/gene_bg</item>
     </style>
     <style name="Theme.Gene.Launcher" parent="Theme.Gene">
-        <item name="android:background">@color/gene_bg</item>
+        <item name="android:windowBackground">@color/gene_bg</item>
     </style>
 </resources>

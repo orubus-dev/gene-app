@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="asset_statements">[{"relation":["delegate_permission\/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"app.orubu.gene","fingerprint":["8B:A1:7B:6E:D6:79:7F:2B:7F:1C:0A:4E:F1:AC:87:03:9E:16:FC:DB:F9:9A:7C:68:3B:00:8C:24:F9:B8:A5:5A"]}}]</string>
     <string name="app_name">Gene</string>
 </resources>
