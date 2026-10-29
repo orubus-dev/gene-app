@@ -1,0 +1,42 @@
+plugins { id 'com.android.application' }
+
+def ksFile = rootProject.file("../gene.keystore")
+def ksPass = System.getenv("GENE_KS_PASS") ?: "gene-orubu-2026"
+
+android {
+    namespace 'app.orubu.gene'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.orubu.gene"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile ksFile
+            storePassword ksPass
+            keyAlias 'gene'
+            keyPassword ksPass
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.github.GoogleChrome:androidbrowserhelper:2.5.2'
+}

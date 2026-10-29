@@ -63,3 +63,11 @@ python3 tools/build_bundles.py /path/to/Gene
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Android APK
+
+`.github/workflows/android.yml` builds + signs `app.orubu.gene` on every push
+touching `android/` and attaches the APK to the GitHub release. The TWA
+points at the Pages site; `/.well-known/assetlinks.json` carries the signing
+fingerprint so the URL bar is hidden. Keystore is committed (personal
+project, reproducible builds) — rotate before any public distribution.

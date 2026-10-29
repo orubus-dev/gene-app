@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Gene" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:statusBarColor">@color/gene_bg</item>
+        <item name="android:navigationBarColor">@color/gene_bg</item>
+        <item name="android:windowBackground">@color/gene_bg</item>
+    </style>
+    <style name="Theme.Gene.Launcher" parent="Theme.Gene">
+        <item name="android:background">@color/gene_bg</item>
+    </style>
+</resources>

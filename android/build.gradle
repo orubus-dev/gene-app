@@ -1,0 +1,5 @@
+// Gene — top-level build. TWA (Trusted Web Activity) host for the on-device
+// organism app. Package: app.orubu.gene
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
