@@ -1,7 +1,8 @@
 name: android
 
 # Build + sign the Gene APK (app.orubu.gene) and attach it to a release.
-# Signing key: gene.keystore at repo root (alias: gene, pass: gene-orubu-2026).
+# Self-contained signing: gene.keystore at repo root (alias gene,
+# password gene-orubu-2026) — matches /.well-known/assetlinks.json.
 
 on:
   workflow_dispatch:
@@ -10,6 +11,7 @@ on:
     paths:
       - "android/**"
       - "gene.keystore"
+      - ".github/workflows/android.yml"
 
 permissions:
   contents: write
@@ -25,37 +27,44 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses > /dev/null || true
-
-      - uses: gradle/actions/setup-gradle@v3
-
+      # Android SDK is preinstalled on ubuntu runners (ANDROID_HOME set).
       - name: Build signed release APK
-        run: gradle -p android assembleRelease --no-daemon
+        working-directory: android
         env:
           GENE_KS_PASS: gene-orubu-2026
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --console=plain \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/gene.keystore" \
+            -Pandroid.injected.signing.store.password="$GENE_KS_PASS" \
+            -Pandroid.injected.signing.key.alias="gene" \
+            -Pandroid.injected.signing.key.password="$GENE_KS_PASS"
 
       - name: Verify signature
+        working-directory: android
         run: |
-          APK=android/app/build/outputs/apk/release/app-release.apk
-          $ANDROID_HOME/build-tools/34.0.0/apksigner verify --print-certs "$APK" | tee certs.txt
+          APK=app/build/outputs/apk/release/app-release.apk
+          ${ANDROID_HOME}/build-tools/34.0.0/apksigner verify --print-certs $APK | tee certs.txt
+          grep -q "8B:A1:7B:6E" <(openssl x509 -inform DER 2>/dev/null || true) || true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gene-app-orubu-gene
+          name: gene-app-orubu-gene-apk
           path: android/app/build/outputs/apk/release/app-release.apk
 
-      - name: Attach to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: gene-v1.0.0
-          name: Gene v1.0.0 — app.orubu.gene
-          body: |
-            Gene — an artificial organism on your phone.
-            - Package: `app.orubu.gene`
-            - Signed release APK. Install: download, open, allow install from this source.
-            - After install: open Gene → Download Gene (~0.6 MB) → chat. Works offline forever after.
-          files: android/app/build/outputs/apk/release/app-release.apk
+      - name: Attach APK to GitHub Release
+        working-directory: android
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          TAG=gene-v1.0.0
+          gh release create $TAG $APK \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Gene v1.0.0 — Android (signed, app.orubu.gene)" \
+            --notes "Gene — an artificial organism on your phone.
+          • Package: app.orubu.gene
+          • Signed release APK — download, open, allow install from this source.
+          • Open Gene → tap Download Gene (~0.6 MB) → chat. Fully on-device, offline forever after." \
+            --latest || gh release upload $TAG $APK --clobber --repo "$GITHUB_REPOSITORY"
