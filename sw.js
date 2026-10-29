@@ -1,9 +1,9 @@
 /* Gene app service worker — offline-first after first visit.
    - app shell: precached
-   - python runtime (pyodide CDN): cached on first successful fetch
+   - python runtime: self-hosted ./pyodide/, cached on first fetch (immutable)
    - model bundles: cached by the app itself (Cache API, gene-model-<ver>)
 */
-const SHELL = "gene-shell-v1";
+const SHELL = "gene-shell-v2";
 const RUNTIME = "gene-runtime-v1";
 const SHELL_FILES = [
   "./",
@@ -46,6 +46,20 @@ self.addEventListener("fetch", (e) => {
     e.respondWith((async () => {
       const cache = await caches.open(SHELL);
       const hit = await cache.match(req, { ignoreSearch: true });
+
+      // pyodide runtime: version-pinned directory, immutable — cache-first
+      // forever, never burn 14 MB of background refresh on every visit
+      if (url.pathname.includes("/pyodide/")) {
+        if (hit) return hit;
+        try {
+          const res = await fetch(req);
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        } catch {
+          return hit || new Response("runtime not cached yet", { status: 503 });
+        }
+      }
+
       const net = fetch(req).then((res) => {
         if (res.ok) cache.put(req, res.clone());
         return res;

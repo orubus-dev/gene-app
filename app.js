@@ -2,7 +2,10 @@
 "use strict";
 
 const PYODIDE_VERSION = "0.26.4";
-const PYODIDE_BASE = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
+// self-hosted: same origin as the app — no CDN can come between Gene and her files
+const PYODIDE_BASE = "./pyodide/";
+// Android shell serves us from appassets — everything is already on the device
+const EMBEDDED = location.hostname === "appassets.androidplatform.net";
 const MODEL_VER = "v1"; // bump when bundles are rebuilt with new training
 const URL_MIND = `./model/gene-mind.zip?v=${MODEL_VER}`;
 const URL_SRC = `./model/gene-src.zip?v=${MODEL_VER}`;
@@ -31,9 +34,9 @@ async function cachedModel() {
   } catch { return null; }
 }
 
-async function fetchWithProgress(url, onPct) {
+async function fetchOnce(url, onPct) {
   const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const total = Number(res.headers.get("content-length")) || 0;
   const reader = res.body.getReader();
   const chunks = []; let got = 0;
@@ -44,6 +47,19 @@ async function fetchWithProgress(url, onPct) {
     if (total) onPct(got / total);
   }
   return new Blob(chunks);
+}
+
+async function fetchWithProgress(url, onPct, tries = 4) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    try {
+      return await fetchOnce(url, onPct);
+    } catch (e) {
+      lastErr = e;
+      if (attempt < tries) await new Promise((r) => setTimeout(r, attempt * 900));
+    }
+  }
+  throw new Error(`${url.split("/").pop()}: ${lastErr && lastErr.message ? lastErr.message : lastErr} (after ${tries} tries)`);
 }
 
 async function downloadModel() {
@@ -133,15 +149,29 @@ def brain_panel():
 "booted"
 `;
 
-async function loadPyodideRuntime() {
-  elBootLabel.textContent = "fetching the runtime (first time only, ~10 MB)…";
-  await new Promise((resolve, reject) => {
+function loadPyodideScript() {
+  return new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = PYODIDE_BASE + "pyodide.js";
     s.onload = resolve;
-    s.onerror = () => reject(new Error("could not load the python runtime — check connection once, then it's offline forever"));
+    s.onerror = () => reject(new Error("could not load the python runtime"));
     document.head.appendChild(s);
   });
+}
+
+async function loadPyodideRuntime() {
+  elBootLabel.textContent = EMBEDDED
+    ? "unpacking the python runtime…"
+    : "fetching the runtime (first time only, ~14 MB)…";
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try { await loadPyodideScript(); lastErr = null; break; }
+    catch (e) {
+      lastErr = e;
+      if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 1000));
+    }
+  }
+  if (lastErr) throw new Error("runtime unreachable — " + lastErr.message);
   elBootLabel.textContent = "starting python…";
   return await loadPyodide({ indexURL: PYODIDE_BASE });
 }
@@ -248,12 +278,32 @@ $("brain-sheet").addEventListener("click", (e) => {
 });
 
 /* ---------------- service worker ---------------- */
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && !EMBEDDED) {
+  // if a waiting SW takes over mid-session, reload so the page runs fresh code
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    if (navigator.serviceWorker.controller) location.reload();
+  });
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
 /* ---------------- start ---------------- */
 (async function start() {
+  // Android shell: her whole mind is already inside the APK — no download, no network
+  if (EMBEDDED) {
+    try {
+      const mind = await (await fetch("./model/gene-mind.zip")).blob();
+      const src = await (await fetch("./model/gene-src.zip")).blob();
+      await wake({ mind, src });
+      return;
+    } catch (e) {
+      elBtnDl.disabled = false;
+      elBtnDl.querySelector(".btn-label").textContent = "Try again";
+      elDlStatus.textContent = "that didn't work — " + e.message;
+    }
+  }
   const installed = await cachedModel();
   if (installed && installed.version === MODEL_VER) {
     const cache = await caches.open(CACHE_MODEL);
